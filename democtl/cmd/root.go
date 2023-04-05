@@ -6,6 +6,8 @@ package cmd
 import (
 	"os"
 
+	"github.com/aajolly/avx-single-region-aws/cmd/create"
+	"github.com/aajolly/avx-single-region-aws/cmd/delete"
 	"github.com/spf13/cobra"
 )
 
@@ -29,8 +31,8 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.AddCommand(controller.CreateCmd)
-	rootCmd.AddCommand(controller.DeleteCmd)
+	rootCmd.AddCommand(create.CreateCmd)
+	rootCmd.AddCommand(delete.DeleteCmd)
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
