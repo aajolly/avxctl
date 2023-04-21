@@ -9,7 +9,7 @@ output "avx_ctrl_public_ip" {
 }
 
 output "vpc_id" {
-  value       = aws_vpc.avx-mgmt-vpc.id
+  value       = aws_vpc.avx_mgmt_vpc.id
   description = "VPC where Aviatrix Controller was built"
 }
 
@@ -19,6 +19,9 @@ output "subnet_id" {
 }
 
 output "security_group_id" {
-  value       = aws_security_group.avx-sg.id
+  value       = aws_security_group.avx_sg.id
   description = "Security group id used by Aviatrix Controller"
+}
+output "copilot_public_ip" {
+  value = module.copilot_build_aws.public_ip
 }

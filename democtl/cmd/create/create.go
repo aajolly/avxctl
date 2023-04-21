@@ -9,10 +9,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// createCmd represents the create command
+// CreateCmd represents the create command
 var CreateCmd = &cobra.Command{
 	Use:   "create",
-	Short: "A brief description of your command",
+	Short: "Create a resource",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("create called")
@@ -29,5 +29,5 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// createCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// CreateCmd.Flags().StringVarP(&toggle, "toggle", "t", "", "Help message for toggle")
 }

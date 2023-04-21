@@ -1,224 +1,30 @@
+terraform {
+  required_providers {
+    aws = {
+      source = "hashicorp/aws"
+      version = "~> 4.0"
+    }
+  }
+}
+provider "aws" {}
 #--------------------------------------------------
 ## IAM Resources - Policies, Roles
 #--------------------------------------------------
 
 resource "aws_iam_policy" "avx_ctrl_role_ec2_policy" {
-  name = "aviatrix-role-ec2-policy"
+  name = "${local.tool_prefix}-role-ec2-policy-${local.region}"
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action   = ["sts:AssumeRole"]
-        Effect   = "Allow"
-        Resource = "arn:aws::iam::*:role/aviatrix-*"
-      },
-      {
-        Action = [
-          "aws-marketplace:MeterUsage",
-          "s3:GetBucketLocation"
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      }
-    ]
-  })
+  policy = data.http.avx_role_ec2_policy.response_body
 }
 
 resource "aws_iam_policy" "avx_ctrl_role_app_policy" {
-  name = "${local.name_prefix}-role-app-policy"
+  name = "${local.tool_prefix}-role-app-policy-${local.region}"
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = [
-          "ec2:Describe*",
-          "ec2:Get*",
-          "ec2:Search*",
-          "elasticloadbalancing:Describe*",
-          "route53:List*",
-          "route53:Get*",
-          "sqs:Get*",
-          "sqs:List*",
-          "sns:List*",
-          "s3:List*",
-          "s3:Get*",
-          "iam:List*",
-          "iam:Get*",
-          "directconnect:Describe*",
-          "guardduty:Get*",
-          "guardduty:List*",
-          "ram:Get*",
-          "ram:List*",
-          "networkmanager:Get*",
-          "networkmanager:List*"
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      },
-      {
-        Action = [
-          "ec2:CreateVpc",
-          "ec2:DeleteVpc",
-          "ec2:ModifyVpcAttribute",
-          "ec2:CreateNetworkAclEntry",
-          "ec2:ReplaceNetworkAclEntry",
-          "ec2:DeleteNetworkAclEntry",
-          "ec2:AssociateVpcCidrBlock",
-          "ec2:AssociateSubnetCidrBlock",
-          "ec2:CreateSubnet",
-          "ec2:DeleteSubnet",
-          "ec2:ModifySubnetAttribute",
-          "ec2:*InternetGateway*",
-          "ec2:*Route*",
-          "ec2:*Instance*",
-          "ec2:*SecurityGroup*",
-          "ec2:*Address*",
-          "ec2:*NetworkInterface*",
-          "ec2:CreateKeyPair",
-          "ec2:DeleteKeyPair",
-          "ec2:CreateTags",
-          "ec2:DeleteTags"
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      },
-      {
-        Action = [
-          "ec2:CreateCustomerGateway",
-          "ec2:DeleteCustomerGateway",
-          "ec2:CreateVpnConnection",
-          "ec2:DeleteVpnConnection",
-          "ec2:CreateVpcPeeringConnection",
-          "ec2:AcceptVpcPeeringConnection",
-          "ec2:DeleteVpcPeeringConnection",
-          "ec2:EnableVgwRoutePropagation",
-          "ec2:DisableVgwRoutePropagation"
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      },
-      {
-        Action = [
-          "ec2:AssociateTransitGatewayRouteTable",
-          "ec2:AcceptTransitGatewayVpcAttachment",
-          "ec2:CreateTransitGateway",
-          "ec2:CreateTransitGatewayRoute",
-          "ec2:CreateTransitGatewayRouteTable",
-          "ec2:CreateTransitGatewayVpcAttachment",
-          "ec2:DeleteTransitGateway",
-          "ec2:DeleteTransitGatewayRoute",
-          "ec2:DeleteTransitGatewayRouteTable",
-          "ec2:DeleteTransitGatewayVpcAttachment",
-          "ec2:DisableTransitGatewayRouteTablePropagation",
-          "ec2:DisassociateTransitGatewayRouteTable",
-          "ec2:EnableTransitGatewayRouteTablePropagation",
-          "ec2:ExportTransitGatewayRoutes",
-          "ec2:ModifyTransitGatewayVpcAttachment",
-          "ec2:RejectTransitGatewayVpcAttachment",
-          "ec2:ReplaceTransitGatewayRoute",
-          "ec2:EnableRoutePropagation"
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      },
-      {
-        Action = [
-          "ram:CreateResourceShare",
-          "ram:DeleteResourceShare",
-          "ram:UpdateResourceShare",
-          "ram:AssociateResourceShare",
-          "ram:DisassociateResourceShare",
-          "ram:TagResource",
-          "ram:UntagResource",
-          "ram:AcceptResourceShareInvitation",
-          "ram:EnableSharingWithAwsOrganization"
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      },
-      {
-        Action = [
-          "directconnect:CreateDirectConnectGateway",
-          "directconnect:CreateDirectConnectGatewayAssociation",
-          "directconnect:CreateDirectConnectGatewayAssociationProposal",
-          "directconnect:DeleteDirectConnectGateway",
-          "directconnect:DeleteDirectConnectGatewayAssociation",
-          "directconnect:DeleteDirectConnectGatewayAssociationProposal",
-          "directconnect:AcceptDirectConnectGatewayAssociationProposal"
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      },
-      {
-        Action = [
-          "sqs:AddPermission",
-          "sqs:ChangeMessageVisibility",
-          "sqs:CreateQueue",
-          "sqs:DeleteMessage",
-          "sqs:DeleteQueue",
-          "sqs:PurgeQueue",
-          "sqs:ReceiveMessage",
-          "sqs:RemovePermission",
-          "sqs:SendMessage",
-          "sqs:SetQueueAttributes",
-          "sqs:TagQueue"
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      },
-      {
-        Action = [
-          "s3:CreateBucket",
-          "s3:DeleteBucket",
-          "s3:ListBucket",
-          "s3:PutObject",
-          "s3:DeleteObject"
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      },
-      {
-        Action = [
-          "iam:PassRole",
-          "iam:AddRoleToInstanceProfile",
-          "iam:CreateInstanceProfile",
-          "iam:DeleteInstanceProfile",
-          "iam:RemoveRoleFromInstanceProfile",
-          "iam:CreateServiceLinkedRole"
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      },
-      {
-        Action = [
-          "iam:DeletePolicyVersion",
-          "iam:CreatePolicyVersion"
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      },
-      {
-        Action = [
-          "elasticloadbalancing:*",
-          "route53:ChangeResourceRecordSets",
-          "ec2:*Volume*",
-          "ec2:*Snapshot*",
-          "ec2:*TransitGatewayPeeringAttachment",
-          "guardduty:*",
-          "globalaccelerator:*",
-          "networkmanager:*"
-        ]
-        Effect   = "Allow"
-        Resource = "*"
-      }
-    ]
-  })
+  policy = data.http.avx_role_app_policy.response_body
 }
 
 resource "aws_iam_role" "avx_ctrl_role_ec2" {
-  name                = "${local.name_prefix}-role-ec2"
+  name                = "${local.tool_prefix}-role-ec2-${local.region}"
   path                = "/"
   description         = "Aviatrix EC2 Role"
   managed_policy_arns = [aws_iam_policy.avx_ctrl_role_ec2_policy.arn]
@@ -237,12 +43,13 @@ resource "aws_iam_role" "avx_ctrl_role_ec2" {
   })
 
   tags = {
-    Name = "${local.name_prefix}-role-ec2"
+    Name = "${local.tool_prefix}-role-ec2-${local.region}"
+    Createdby = local.tool_prefix
   }
 }
 
 resource "aws_iam_role" "avx_ctrl_role_app" {
-  name        = "${local.name_prefix}-role-app"
+  name        = "${local.tool_prefix}-role-app-${local.region}"
   path        = "/"
   description = "Aviatrix App Role"
   managed_policy_arns = [
@@ -263,24 +70,26 @@ resource "aws_iam_role" "avx_ctrl_role_app" {
   })
 
   tags = {
-    Name = "${local.name_prefix}-role-app"
+    Name = "${local.tool_prefix}-role-app-${local.region}"
+    Createdby = local.tool_prefix
   }
 }
 
 resource "aws_iam_instance_profile" "avx_ctrl_ec2_profile" {
-  name = "${local.name_prefix}-ec2-profile"
+  name = "${local.tool_prefix}-ec2-profile-${local.region}"
   role = aws_iam_role.avx_ctrl_role_ec2.name
 }
 
 #-------------------------------------------------------------
 ## VPC Resources - VPC, Subnets, Route Tables, Routes etc
 #-------------------------------------------------------------
-resource "aws_vpc" "avx-mgmt-vpc" {
+resource "aws_vpc" "avx_mgmt_vpc" {
   cidr_block           = var.vpc_cidr
   enable_dns_support   = true
   enable_dns_hostnames = true
   tags = {
-    Name = "${local.name_prefix}-mgmt-vpc"
+    Name = "${local.tool_prefix}-mgmt-vpc"
+    Createdby = local.tool_prefix
   }
 }
 
@@ -288,9 +97,10 @@ resource "aws_vpc" "avx-mgmt-vpc" {
 #### Internet Gateway
 #------------------------------------------
 resource "aws_internet_gateway" "igw" {
-  vpc_id = aws_vpc.avx-mgmt-vpc.id
+  vpc_id = aws_vpc.avx_mgmt_vpc.id
   tags = {
-    Name = "${local.name_prefix}-igw"
+    Name = "${local.tool_prefix}-igw"
+    Createdby = local.tool_prefix
   }
 }
 
@@ -303,11 +113,12 @@ data "aws_availability_zones" "az" {
 resource "aws_subnet" "public_subnet" {
   count             = 3
   availability_zone = data.aws_availability_zones.az.names[count.index]
-  vpc_id            = aws_vpc.avx-mgmt-vpc.id
-  cidr_block        = cidrsubnet(aws_vpc.avx-mgmt-vpc.cidr_block, 4, count.index)
+  vpc_id            = aws_vpc.avx_mgmt_vpc.id
+  cidr_block        = cidrsubnet(aws_vpc.avx_mgmt_vpc.cidr_block, 4, count.index)
   tags = {
-    Name  = "${local.name_prefix}-public_subnet_${count.index + 1}"
+    Name  = "${local.tool_prefix}-public_subnet_${count.index + 1}"
     Reach = "Public"
+    Createdby = local.tool_prefix
   }
 }
 #------------------------------------------
@@ -316,7 +127,8 @@ resource "aws_subnet" "public_subnet" {
 resource "aws_eip" "avx_ctrl_eip" {
   vpc = true
   tags = {
-    Name = "${local.name_prefix}-ctrl-eip"
+    Name = "${local.tool_prefix}-ctrl-eip"
+    Createdby = local.tool_prefix
   }
   depends_on = [aws_internet_gateway.igw]
 }
@@ -328,10 +140,10 @@ resource "aws_eip_association" "avx_ctrl_eip_assoc" {
 
 resource "aws_network_interface" "avx_ctrl_eni" {
   subnet_id       = aws_subnet.public_subnet[0].id
-  security_groups = [aws_security_group.avx-sg.id]
+  security_groups = [aws_security_group.avx_sg.id]
   tags = {
-    Name      = "${local.name_prefix}-controller-interface"
-    Createdby = "Terraform+Aviatrix"
+    Name      = "${local.tool_prefix}-controller-interface"
+    Createdby = local.tool_prefix
   }
 }
 #------------------------------------------
@@ -340,9 +152,10 @@ resource "aws_network_interface" "avx_ctrl_eni" {
 
 resource "aws_route_table" "public_rt" {
   count  = 3
-  vpc_id = aws_vpc.avx-mgmt-vpc.id
+  vpc_id = aws_vpc.avx_mgmt_vpc.id
   tags = {
-    Name = "${local.name_prefix}-public_rt_${count.index + 1}"
+    Name = "${local.tool_prefix}-public_rt_${count.index + 1}"
+    Createdby = local.tool_prefix
   }
   route {
     cidr_block = var.internet_cidr
@@ -360,28 +173,29 @@ resource "aws_route_table_association" "public_rt_assoc" {
 #------------------------------------------
 #### Security Group
 #------------------------------------------
-resource "aws_security_group" "avx-sg" {
+resource "aws_security_group" "avx_sg" {
   description = "Aviatrix - Allow HTTPS to Controller"
-  vpc_id      = aws_vpc.avx-mgmt-vpc.id
-
-  ingress {
-    description = "Allow Access from My Public IP"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [local.my_public_ip]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = [var.internet_cidr]
-  }
+  vpc_id      = aws_vpc.avx_mgmt_vpc.id
 
   tags = {
-    Name = "${local.name_prefix}SecurityGroup"
+    Name = "${local.tool_prefix}SecurityGroup"
+    Createdby = local.tool_prefix
   }
+}
+resource "aws_vpc_security_group_ingress_rule" "avx_ctrl_ingress1" {
+  description = "Allow Ingress from local machine"
+  security_group_id = aws_security_group.avx_sg.id
+  cidr_ipv4 = local.my_public_ip
+  from_port = 443
+  to_port = 443
+  ip_protocol = "tcp"
+}
+
+resource "aws_vpc_security_group_egress_rule" "avx_ctrl_egress1" {
+  description = "Allow Egress from Aviatrix Controller"
+  security_group_id = aws_security_group.avx_sg.id
+  cidr_ipv4 = var.internet_cidr
+  ip_protocol = "-1"
 }
 #------------------------------------------
 #### Aviatrix Controller
@@ -390,7 +204,7 @@ resource "aws_instance" "aviatrixcontroller" {
   ami                     = local.ami_id
   instance_type           = var.instance_type
   key_name                = "aajolly-apse2"
-  iam_instance_profile    = aws_iam_role.avx_ctrl_role_ec2.name
+  iam_instance_profile    = aws_iam_instance_profile.avx_ctrl_ec2_profile.name
   disable_api_termination = true
 
   network_interface {
@@ -401,12 +215,12 @@ resource "aws_instance" "aviatrixcontroller" {
   root_block_device {
     volume_size = var.root_volume_size
     volume_type = var.root_volume_type
-    encrypted   = var.ebs-encryption
+    encrypted   = var.ebs_encryption
   }
 
   tags = {
-    Name      = "${local.name_prefix}-controller"
-    Createdby = "Terraform+Aviatrix"
+    Name      = "${local.tool_prefix}-controller"
+    Createdby = local.tool_prefix
   }
 
   lifecycle {
@@ -414,45 +228,51 @@ resource "aws_instance" "aviatrixcontroller" {
       ami
     ]
   }
-  user_data = <<EOF
-#!/bin/bash -ex
-sudo service ssh stop
-EOF
 }
 
-resource "null_resource" "this" {
-  provisioner "local-exec" {
-    command     = <<-EOT
-    #expects json file, also private_ip of ctrl, pub_ip of copilot
-    # waiting for the 200 response
-        while [[ "$(curl -s -o /dev/null -w '%%{http_code}' https://${aws_instance.aviatrixcontroller.public_ip} --insecure)" != "200" ]]; do sleep 10; echo "waiting for controller"; done
-    # in the beginning autheticate with username and password
-        while [[ "$(curl -X POST -H 'Content-Type: application/x-www-form-urlencoded' -d "action=login&username=admin&password=${aws_instance.aviatrixcontroller.private_ip}" https://${aws_instance.aviatrixcontroller.public_ip}/v1/api --insecure | jq -r .return)" != "true" ]]; do sleep 10; echo "Waiting for CID   "; done
-        sleep 60
-        init_ctrl_auth=$(curl -X POST -H 'Content-Type: application/x-www-form-urlencoded' -d "action=login&username=admin&password=${aws_instance.aviatrixcontroller.private_ip}" https://${aws_instance.aviatrixcontroller.public_ip}/v1/api --insecure)
-    # init_ctrl_auth=$(curl -X POST -H 'Content-Type: application/x-www-form-urlencoded' -d "action=login&username=admin&password=${var.admin_password}" https://${aws_instance.aviatrixcontroller.public_ip}/v1/api --insecure)
-        CID=$(echo $init_ctrl_auth | jq -r .CID)
-        echo $CID
-    #auth with CID , set password, set recovery email, defaultemail : ace.lab@aviatrix.com tfvars may already exist, can reuse
-        set_password=$(curl -X POST -H 'Content-Type: application/x-www-form-urlencoded' -d "action=edit_account_user&CID=$CID&account_name=admin&username=admin&password=${var.admin_password}&what=password&email=${var.admin_email}&old_password=${aws_instance.aviatrixcontroller.private_ip}&new_password=${var.admin_password}" https://${aws_instance.aviatrixcontroller.public_ip}/v1/api --insecure)
-        echo $set_password
-        add_email=$(curl -X POST -H 'Content-Type: application/x-www-form-urlencoded' -d "action=add_admin_email_addr&CID=$CID&admin_email=${var.admin_email}" https://${aws_instance.aviatrixcontroller.public_ip}/v1/api --insecure)
-        echo $add_email
-    #should be over writerable, curr set to pod name (pod130), just dont set controller label if not passed in
-        set_ctrl_label=$(curl -X POST -H 'Content-Type: application/x-www-form-urlencoded' -d "action=set_controller_name&CID=$CID&controller_name=${var.ctrl_name}" https://${aws_instance.aviatrixcontroller.public_ip}/v1/api --insecure)
-        echo $set_ctrl_label
-    #if not passed in, don't do it
-        set_ctrl_license=$(curl -X POST -H 'Content-Type: application/x-www-form-urlencoded' -d "action=setup_customer_id&CID=$CID&customer_id=${var.ctrl_customer_id}" https://${aws_instance.aviatrixcontroller.public_ip}/v1/api --insecure)
-        echo $set_ctrl_license
-    #create that service acc in ctrl
-        add_copilot_service_account=$(curl -X POST -H 'Content-Type: application/x-www-form-urlencoded' -d "action=add_account_user&CID=$CID&account_name=copilot&username=copilot&password=${var.admin_password}&email=${var.admin_email}&groups=admin" https://${aws_instance.aviatrixcontroller.public_ip}/v1/api --insecure)
-        echo $add_copilot_service_account
-    #upgrade
-        upgrade_ctrl=$(curl -X POST -H 'Content-Type: application/x-www-form-urlencoded' -m 360 -d "action=upgrade&CID=$CID&version=${var.ctrl_version}" https://${aws_instance.aviatrixcontroller.public_ip}/v1/api --insecure)
-        echo $upgrade_ctrl
-    #don't sleep, know when it's done
-        sleep 150
-    EOT
-    interpreter = ["/bin/bash", "-c"]
+#------------------------------------------
+#### Aviatrix CoPilot
+#------------------------------------------
+resource "aws_ebs_volume" "copilot" {
+  availability_zone = "${data.aws_region.current.name}a"
+  encrypted         = true
+  type              = "gp2"
+  size              = 30
+}
+
+module "copilot_build_aws" {
+  source                = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_build_aws"
+  copilot_name          = "${local.tool_prefix}-copilot"
+  use_existing_keypair  = true
+  keypair               = "aajolly-apse2"
+  controller_public_ip  = aws_eip.avx_ctrl_eip.public_ip
+  controller_private_ip = aws_instance.aviatrixcontroller.private_ip
+  instance_type         = "t3.xlarge"
+  use_existing_vpc      = true
+  vpc_id                = aws_vpc.avx_mgmt_vpc.id
+  subnet_id             = aws_subnet.public_subnet[0].id
+
+  allowed_cidrs = {
+    "tcp_cidrs" = {
+      protocol = "tcp"
+      port     = "443"
+      cidrs    = ["0.0.0.0/0"]
+    }
+    "udp_cidrs_1" = {
+      protocol = "udp"
+      port     = "5000"
+      cidrs    = ["0.0.0.0/0"]
+    }
+    "udp_cidrs_2" = {
+      protocol = "udp"
+      port     = "31283"
+      cidrs    = ["0.0.0.0/0"]
+    }
+  }
+  additional_volumes = {
+    "one" = {
+      device_name = "/dev/sda2"
+      volume_id   = aws_ebs_volume.copilot.id
+    }
   }
 }
