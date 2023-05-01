@@ -5,12 +5,13 @@ package create
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
-	"net"
-	"os/exec"
+	"net/http"
 	"strings"
 	"time"
 
+	"github.com/aajolly/avx-single-region-aws/democtl/common"
 	"github.com/fatih/color"
 	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/spf13/cobra"
@@ -41,12 +42,12 @@ var controllerCmd = &cobra.Command{
 			"lic":     lic,
 		}
 
-		isFlagEmpty(flags)
+		common.IsFlagEmpty(flags)
 		color.Green(dt + ": Validating CIDR")
-		if !isIPv4CIDR(flags["cidr"]) {
+		if !common.IsIPv4CIDR(flags["cidr"]) {
 			color.Magenta("%s is not a valid IPv4 CIDR, please specifiy a valid IPv4 CIDR, ex: 10.0.0.0/24", flags["cidr"])
 		}
-		execPath, _ := getExecPath()
+		execPath, _ := common.GetExecPath()
 		// cwd, err := os.Getwd()
 
 		workingDir := "/workspaces/avx-single-region-aws/terraform/modules/controller"
@@ -105,10 +106,23 @@ var controllerCmd = &cobra.Command{
 			color.Magenta(dt+":", err)
 		}
 
-		ctrlIp, _ := output["avx_ctrl_public_ip"].Value.MarshalJSON()
+		ctrlPubIp, _ := output["avx_ctrl_public_ip"].Value.MarshalJSON()
+		ctrlPrivIp, _ := output["avx_ctrl_private_ip"].Value.MarshalJSON()
 		cpltIp, _ := output["copilot_public_ip"].Value.MarshalJSON()
-		color.Yellow(fmt.Sprintf("\nController PublicIP: %s\n", string(ctrlIp)))
-		color.Yellow(fmt.Sprintf("\nController PublicIP: %s\n", string(cpltIp)))
+		aws_role_arn, _ := output["aws_role_arn"].Value.MarshalJSON()
+		aws_role_ec2, _ := output["aws_role_ec2"].Value.MarshalJSON()
+		color.Yellow(fmt.Sprintf("\nAviatrix Controller PublicIP: %s\n", string(ctrlPubIp)))
+		color.Yellow(fmt.Sprintf("\nAviatrix CoPilot PublicIP: %s\n", string(cpltIp)))
+
+		transport := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+
+		// Create a new http client with the custom transport
+		client := &http.Client{Transport: transport}
+
+		// cid, _ := common.CtrlInitialize(client, string(ctrlPubIp), string(ctrlPrivIp))
+		common.CtrlInitialize(client, string(ctrlPubIp), string(ctrlPrivIp), string(cpltIp), lic, version, pwd, email, string(aws_role_arn), string(aws_role_ec2))
 	},
 }
 
@@ -122,33 +136,9 @@ func init() {
 	controllerCmd.Flags().StringP("email", "e", "", "Admininstrator email for Aviatrix Controller")
 	controllerCmd.Flags().StringP("password", "p", "", "Admininistrator password for Aviatrix Controller")
 	controllerCmd.Flags().StringP("customer-id", "l", "", "Aviatrix CustomerID to use")
+	controllerCmd.Flags().StringP("aws-account-id", "aaid", "", "AWS Account ID for Aviatrix Controller Deployment")
+	controllerCmd.Flags().StringP("azure-subs-id", "asub", "", "Azure Subscription ID for Aviatrix Controller Deployment")
 	// controllerCmd.MarkFlagRequired("email")
 	// controllerCmd.MarkFlagRequired("password")
 	// controllerCmd.MarkFlagRequired("customer-id")
-}
-
-// Define a function that creates an Aviatrix Controller
-func isEmpty(s string) bool {
-	return len(strings.TrimSpace(s)) == 0
-}
-
-func isIPv4CIDR(s string) bool {
-	fmt.Println("1")
-	_, ipv4Net, err := net.ParseCIDR(s)
-	if err != nil {
-		return false
-	}
-	return ipv4Net.IP.To4() != nil
-}
-func isFlagEmpty(m map[string]string) {
-	for key, value := range m {
-		if isEmpty(value) {
-			color.Cyan("%s cannot be empty", key)
-		}
-	}
-}
-func getExecPath() (string, error) {
-	// Ensure the correct version of Terraform
-	execPath, err := exec.LookPath("terraform")
-	return execPath, err
 }

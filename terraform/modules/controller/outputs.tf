@@ -25,3 +25,11 @@ output "security_group_id" {
 output "copilot_public_ip" {
   value = module.copilot_build_aws.public_ip
 }
+
+output "aws_role_arn" {
+  value = aws_iam_role.avx_ctrl_role_app.arn
+}
+
+output "aws_role_ec2" {
+  value = aws_iam_role.avx_ctrl_role_ec2.arn
+}
