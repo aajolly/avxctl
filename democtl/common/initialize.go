@@ -12,37 +12,19 @@ import (
 	"github.com/fatih/color"
 )
 
-func checkServerUp(client *http.Client, url string, node string) {
-	color.Blue("## Checking " + node + "is UP...")
-	var urlresponse *http.Response = &http.Response{}
-
-	urlresponse, _ = client.Get(url)
-
-	for {
-		if urlresponse != nil {
-			if urlresponse.StatusCode == 200 {
-				color.Blue(node + "is UP...")
-				break
-			}
-		}
-		urlresponse, _ = client.Get(url)
-	}
-
-}
-func getCid(client *http.Client, ctrl_private_ip string, ctrlurl string) (string, error) {
+func getCid(client *http.Client, password string, ctrlurl string) (string, error) {
 
 	color.Blue("## Fetching CID...")
 	var respBody map[string]interface{}
-	// ctrlurl := "https://" + ctrl_pub_ip + "/v1/api"
 
 	// Check whether Controller is UP
-	checkServerUp(client, ctrlurl, "Aviatrix Controller")
+	CheckServerUp(client, ctrlurl, "Aviatrix Controller")
 
 	// Prepare form data
 	data := url.Values{
 		"action":   {"login"},
 		"username": {"admin"},
-		"password": {ctrl_private_ip},
+		"password": {password},
 	}
 
 	// Create a new POST request with the form data
@@ -56,23 +38,23 @@ func getCid(client *http.Client, ctrl_private_ip string, ctrlurl string) (string
 	// Print the response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return string(err.Error()), err
+		color.Red(err.Error())
+		panic(err)
 	}
 	json.Unmarshal(body, &respBody)
 	cid, ok := respBody["CID"]
 	if !ok {
-		fmt.Printf("CID does not exist yet\n")
-		return "CID does not exist yet", errors.New("CID does not exist yet")
+		color.Red("CID does not exist yet\n")
+		panic(errors.New("CID does not exist yet"))
 	}
 	cid1, _ := cid.(string)
-	color.Green("## Fetched CID...")
+	color.Green("fetched CID...")
 	return cid1, nil
 }
 
 func setAdminEmail(client *http.Client, cid string, email string, ctrlurl string) (string, error) {
 	color.Blue("## Setting Admin Email...")
 	var respBody map[string]interface{}
-	// ctrlurl := "https://" + ctrl_pub_ip + "/v1/api"
 
 	//Prepare form data
 	data := url.Values{
@@ -135,7 +117,7 @@ func runCtrlInitialSetup(client *http.Client, cid string, ver string, ctrlurl st
 	json.Unmarshal(body, &respBody)
 
 	if respBody["return"] == true {
-		color.Green("## Initial Setup COMPLETE - Aviatrix Controller...")
+		color.Green("Initial Setup COMPLETE - Aviatrix Controller...")
 		return "OK", nil
 	} else {
 		color.Red(respBody["results"].(string))
@@ -153,7 +135,7 @@ func setAdminPassword(client *http.Client, ctrl_private_ip string, cid string, p
 	data := url.Values{
 		"action":       {"edit_account_user"},
 		"CID":          {cid},
-		"account_name": {"run"},
+		"account_name": {"admin"},
 		"username":     {"admin"},
 		"password":     {ctrl_private_ip},
 		"what":         {"password"},
@@ -161,15 +143,6 @@ func setAdminPassword(client *http.Client, ctrl_private_ip string, cid string, p
 		"old_password": {ctrl_private_ip},
 		"new_password": {pwd},
 	}
-	// data.Set("action", "edit_account_user")
-	// data.Set("CID", cid)
-	// data.Set("account_name", "run")
-	// data.Set("username", "admin")
-	// data.Set("password", ctrl_private_ip)
-	// data.Set("what", "password")
-	// data.Set("email", email)
-	// data.Set("old_password", ctrl_private_ip)
-	// data.Set("new_password", pwd)
 
 	// Create a new POST request with the form data
 	resp, err := client.Post(ctrlurl, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
@@ -185,7 +158,7 @@ func setAdminPassword(client *http.Client, ctrl_private_ip string, cid string, p
 		return string(err.Error()), err
 	}
 	json.Unmarshal(body, &respBody)
-
+	fmt.Println(respBody)
 	if respBody["return"] == true {
 		color.Green(respBody["results"].(string))
 		return "OK", nil
@@ -222,9 +195,9 @@ func setCustomerId(client *http.Client, cid string, cust_id string, ctrlurl stri
 	json.Unmarshal(body, &respBody)
 
 	if respBody["return"] == true {
-		color.Green(respBody["results"].(string))
+		color.Green("Aviatrix License Set")
 	} else {
-		color.Red(respBody["results"].(string))
+		color.Red("Failed to set Aviatrix Controller License")
 	}
 }
 
@@ -239,6 +212,8 @@ func onboardAWSAccount(client *http.Client,
 	color.Blue("## Onboarding AWS Account " + aai)
 	var respBody map[string]interface{}
 
+	color.Yellow(aws_role_arn)
+	color.Yellow(aws_role_ec2)
 	// Prepare data
 	data := url.Values{
 		"action":             {"setup_account_profile"},
@@ -250,7 +225,7 @@ func onboardAWSAccount(client *http.Client,
 		"aws_iam":            {"true"},
 		"aws_role_arn":       {aws_role_arn},
 		"aws_role_ec2":       {aws_role_ec2},
-		"groups":             {"group1"},
+		"groups":             {"admin"},
 		"skip_sg_config":     {"true"},
 	}
 	// Create a new POST request with the form data
@@ -267,7 +242,7 @@ func onboardAWSAccount(client *http.Client,
 		color.Red(err.Error())
 	}
 	json.Unmarshal(body, &respBody)
-
+	fmt.Println(respBody)
 	if respBody["return"] == true {
 		color.Green(respBody["results"].(string))
 	} else {
@@ -282,15 +257,49 @@ func getAWSAccountNumber(client *http.Client, ctrlurl string, cid string) (strin
 
 	// Define query parameters
 	params := url.Values{
-		"action": {},
+		"action": {"get_ctrl_aws_acct_num"},
 		"CID":    {cid},
 	}
-
-	// Define URL
+	// Define URL with parameters
 	queryUrl := ctrlurl + "?" + params.Encode()
 
 	// Make the GET request
 	resp, err := client.Get(queryUrl)
+	if err != nil {
+		color.Red(err.Error())
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	// Print the response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		color.Red(err.Error())
+	}
+	json.Unmarshal(body, &respBody)
+	// fmt.Println(respBody)
+	// color.Blue(respBody["results"].(string))
+	if respBody["return"] == true {
+		color.Green("fetched AWS Account Number...")
+		return respBody["results"].(string), nil
+	} else {
+		color.Red("Failed to fetch AWS Account Number...")
+		return respBody["results"].(string), errors.New(respBody["results"].(string))
+	}
+}
+func setCtrlName(client *http.Client, ctrlurl string, ctrl_name string, cid string) {
+	color.Blue("## Setting Aviatrix Controller Name: %s", ctrl_name)
+	var respBody map[string]interface{}
+
+	// Prepare data
+	data := url.Values{
+		"action":          {"set_controller_name"},
+		"CID":             {cid},
+		"controller_name": {ctrl_name},
+	}
+	// Create a new POST request with the form data
+	resp, err := client.Post(ctrlurl, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()))
+
 	if err != nil {
 		color.Red(err.Error())
 	}
@@ -302,32 +311,52 @@ func getAWSAccountNumber(client *http.Client, ctrlurl string, cid string) (strin
 		color.Red(err.Error())
 	}
 	json.Unmarshal(body, &respBody)
-
+	fmt.Println(respBody)
 	if respBody["return"] == true {
-		return respBody["results"].(string), nil
+		color.Green("Controller name set to: %s", ctrl_name)
 	} else {
-		return respBody["results"].(string), errors.New(respBody["results"].(string))
+		color.Red("Failed to set controller name: %s", ctrl_name)
 	}
 }
 
 func CtrlInitialize(client *http.Client,
 	ctrl_pub_ip string,
 	ctrl_private_ip string,
-	cplt_public_ip string,
+	// cplt_public_ip string,
 	cust_id string,
 	ver string,
 	password string,
 	email string,
+	region string,
 	aws_role_arn string,
-	aws_role_ec2 string) {
+	aws_role_ec2 string,
+	ctrl_vpc_id string,
+	ctrl_subnet_cidr string,
+	ctrl_name string,
+	cmd string) {
 
-	color.Blue("## Initializing Aviatrix Controller...")
-	ctrlurl := "https://" + ctrl_pub_ip + "/v1/api"
-	cid, _ := getCid(client, ctrl_private_ip, ctrlurl)
-	setCustomerId(client, cid, cust_id, ctrlurl)
-	setAdminEmail(client, cid, email, ctrlurl)
-	runCtrlInitialSetup(client, cid, ver, ctrlurl)
-	aai, _ := getAWSAccountNumber(client, ctrlurl, cid)
-	onboardAWSAccount(client, ctrlurl, aai, cid, email, aws_role_arn, aws_role_ec2)
-	setAdminPassword(client, ctrl_private_ip, cid, password, email, ctrlurl)
+	switch cmd {
+	case "create":
+		color.Blue("## Creating Resources...")
+		ctrlurl := "https://" + ctrl_pub_ip + "/v1/api"
+		cid, _ := getCid(client, ctrl_private_ip, ctrlurl)
+		setCustomerId(client, cid, cust_id, ctrlurl)
+		setAdminEmail(client, cid, email, ctrlurl)
+		runCtrlInitialSetup(client, cid, ver, ctrlurl)
+		// Get CID again after initial setup
+		cid1, _ := getCid(client, ctrl_private_ip, ctrlurl)
+		setCtrlName(client, ctrlurl, ctrl_name, cid1)
+		aai, _ := getAWSAccountNumber(client, ctrlurl, cid1)
+		onboardAWSAccount(client, ctrlurl, aai, cid1, email, aws_role_arn, aws_role_ec2)
+		setAdminPassword(client, ctrl_private_ip, cid1, password, email, ctrlurl)
+		cid2, _ := getCid(client, password, ctrlurl)
+		DeployCopilot(client, ctrlurl, cid2, "aws-account1", region, ctrl_vpc_id, ctrl_subnet_cidr, password, ver)
+
+	case "delete":
+		color.Blue("## Initiating Deletion of resources...")
+		ctrlurl := "https://" + ctrl_pub_ip + "/v1/api"
+		cid, _ := getCid(client, password, ctrlurl)
+		DestroyCopilot(client, cid, ctrlurl)
+	}
+
 }

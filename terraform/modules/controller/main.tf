@@ -6,7 +6,9 @@ terraform {
     }
   }
 }
-provider "aws" {}
+provider "aws" {
+  region = var.region
+}
 #--------------------------------------------------
 ## IAM Resources - Policies, Roles
 #--------------------------------------------------
@@ -14,7 +16,7 @@ provider "aws" {}
 resource "aws_iam_policy" "avx_ctrl_role_ec2_policy" {
   name = "${local.tool_prefix}-role-ec2-policy-${local.region}"
 
-  policy = data.http.avx_role_ec2_policy.response_body
+  policy = data.aws_iam_policy_document.avx_role_ec2_policy.json
 }
 
 resource "aws_iam_policy" "avx_ctrl_role_app_policy" {
@@ -52,9 +54,7 @@ resource "aws_iam_role" "avx_ctrl_role_app" {
   name        = "${local.tool_prefix}-role-app-${local.region}"
   path        = "/"
   description = "Aviatrix App Role"
-  managed_policy_arns = [
-    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-  ]
+  managed_policy_arns = [aws_iam_policy.avx_ctrl_role_app_policy.arn]
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -203,7 +203,7 @@ resource "aws_vpc_security_group_egress_rule" "avx_ctrl_egress1" {
 resource "aws_instance" "aviatrixcontroller" {
   ami                     = local.ami_id
   instance_type           = var.instance_type
-  key_name                = "aajolly-apse2"
+  key_name                = var.keypair
   iam_instance_profile    = aws_iam_instance_profile.avx_ctrl_ec2_profile.name
   disable_api_termination = true
 
@@ -234,6 +234,7 @@ resource "aws_instance" "aviatrixcontroller" {
 #### Aviatrix CoPilot
 #------------------------------------------
 resource "aws_ebs_volume" "copilot" {
+  count = var.ctrl_version >= 6.8 ? 0 : 1
   availability_zone = "${data.aws_region.current.name}a"
   encrypted         = true
   type              = "gp2"
@@ -241,10 +242,11 @@ resource "aws_ebs_volume" "copilot" {
 }
 
 module "copilot_build_aws" {
+  count = var.ctrl_version >= 6.8 ? 0 : 1
   source                = "github.com/AviatrixSystems/terraform-modules-copilot.git//copilot_build_aws"
   copilot_name          = "${local.tool_prefix}-copilot"
   use_existing_keypair  = true
-  keypair               = "aajolly-apse2"
+  keypair               = var.keypair
   controller_public_ip  = aws_eip.avx_ctrl_eip.public_ip
   controller_private_ip = aws_instance.aviatrixcontroller.private_ip
   instance_type         = "t3.xlarge"
@@ -272,7 +274,7 @@ module "copilot_build_aws" {
   additional_volumes = {
     "one" = {
       device_name = "/dev/sda2"
-      volume_id   = aws_ebs_volume.copilot.id
+      volume_id   = aws_ebs_volume.copilot[count.index].id
     }
   }
 }

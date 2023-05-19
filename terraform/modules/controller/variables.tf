@@ -1,12 +1,25 @@
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 
-data "http" "avx_role_ec2_policy" {
-  url = "https://s3-us-west-2.amazonaws.com/aviatrix-download/iam_assume_role_policy.txt"
-  request_headers = {
-    "Accept" = "text/*"
+data "aws_iam_policy_document" "avx_role_ec2_policy" {
+  statement {
+    actions = [
+      "sts:AssumeRole",
+    ]
+
+    resources = ["arn:aws:iam::*:role/avx*"]
+  }
+
+  statement {
+    actions = [
+      "aws-marketplace:MeterUsage",
+      "s3:GetBucketLocation",
+    ]
+
+    resources = ["*"]
   }
 }
+
 data "http" "avx_role_app_policy" {
   url = "https://s3-us-west-2.amazonaws.com/aviatrix-download/IAM_access_policy_for_CloudN.txt"
   request_headers = {
@@ -70,27 +83,8 @@ variable "ebs_encryption" {
 }
 variable "keypair" {
   type = string
-  default = "aajolly-apse2"
 }
-# variable "admin_password" {
-#   type      = string
-#   default   = "Pa$$w0rd123"
-#   sensitive = true
-# }
-# variable "admin_email" {
-#   type      = string
-#   default   = "ajolly@aviatrix.com"
-#   sensitive = true
-# }
-# variable "ctrl_name" {
-#   type    = string
-#   default = "avxctl-controller"
-# }
-# variable "ctrl_customer_id" {
-#   type      = string
-#   sensitive = true
-# }
-# variable "ctrl_version" {
-#   type    = string
-#   default = "latest"
-# }
+variable "ctrl_version" {
+  type    = string
+  default = "latest"
+}
