@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aajolly/avx-single-region-aws/democtl/common"
+	"github.com/aajolly/avxctl/avxctl/common"
 	"github.com/fatih/color"
 	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/spf13/cobra"

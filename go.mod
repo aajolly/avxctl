@@ -1,4 +1,4 @@
-module github.com/aajolly/avx-single-region-aws/democtl
+module github.com/aajolly/avxctl/avxctl
 
 go 1.20
 
