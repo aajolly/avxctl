@@ -6,8 +6,8 @@ package cmd
 import (
 	"os"
 
-	"github.com/aajolly/avxctl/avxctl/cmd/create"
-	"github.com/aajolly/avxctl/avxctl/cmd/delete"
+	"github.com/aajolly/avxctl/cmd/create"
+	"github.com/aajolly/avxctl/cmd/delete"
 	"github.com/spf13/cobra"
 )
 

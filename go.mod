@@ -1,4 +1,4 @@
-module github.com/aajolly/avxctl/avxctl
+module github.com/aajolly/avxctl
 
 go 1.20
 
