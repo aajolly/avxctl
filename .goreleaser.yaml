@@ -29,7 +29,7 @@ universal_binaries:
 brews:
   -
     name: avxctl
-    homepage: https://github.com/aajolly/avx-single-region-aws
+    homepage: https://github.com/aajolly/avxctl
     repository:
       owner: aajolly
       name: homebrew-jollyprojects

@@ -1,2 +1,2 @@
-# avx-single-region-aws
+# avxctl
 Repository for playing around with Aviatrix
