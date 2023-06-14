@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -29,9 +30,9 @@ var controllerCmd = &cobra.Command{
 	Short: "Creates an Aviatrix Controller",
 	Long:  `Creates an Aviatrix Controller with specific version, 6.7+`,
 	Run: func(cmd *cobra.Command, args []string) {
-		filePath := viper.GetString("file")
+		// filePath := viper.GetString("file")
 
-		// Extrat the directory path
+		// Extract the directory path
 		dirPath := filepath.Dir(filePath)
 		color.Blue("Config File Directory: %s", dirPath)
 
@@ -84,9 +85,9 @@ var controllerCmd = &cobra.Command{
 		// 	color.Magenta("%s is not a valid IPv4 CIDR, please specifiy a valid IPv4 CIDR, ex: 10.0.0.0/24", flags["cidr"])
 		// }
 		execPath, _ := common.GetExecPath()
-		// cwd, err := os.Getwd()
+		cwd, _ := os.Getwd()
 
-		workingDir := "/workspaces/avx-single-region-aws/terraform/modules/controller"
+		workingDir := fmt.Sprintf("%s/terraform/modules/controller", cwd)
 		trimmedVersion := common.TrimVersion(version)
 
 		// Setup terraform environment and check for errors

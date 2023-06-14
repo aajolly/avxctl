@@ -13,8 +13,8 @@ variable "docker_image" {
 }
 
 
-source "docker" "ubuntu" {
-  image  = var.docker_image
+source "docker" "aajolly" {
+  image  = nyancat:latest
   commit = true
 }
 source "docker" "ubuntu-bionic" {

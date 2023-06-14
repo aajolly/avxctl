@@ -7,11 +7,11 @@ demo:
     version: "7.1"
     email: ajolly@aviatrix.com
     password: Jolly123!
-    customerId: kuch-bhi
+    customerId: "aviatrix.com-abu-NebakjDHULf-1665696860.44"
     keypair: aajolly-key
-    accId: 716621600308
+    accId: 488655661271
     vpcCidr: "10.10.10.0/23"
   copilot:
-    cluster: true
+    cluster: false
 
 

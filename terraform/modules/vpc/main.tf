@@ -116,7 +116,7 @@ resource "aws_security_group" "vpce_sg" {
   description = "Allow TLS"
   vpc_id      = aws_vpc.vpc.id
   tags = {
-    Name = "aajolly_vpce_sg"
+    Name = "vpce_sg"
   }
 }
 resource "aws_security_group_rule" "allow_all" {
@@ -134,13 +134,13 @@ resource "aws_security_group_rule" "tls_vpc" {
   from_port = var.tls_port
   to_port = var.tls_port
   protocol = var.protocol
-  cidr_blocks = aws_vpc.vpc.cidr_block
+  cidr_blocks = [aws_vpc.vpc.cidr_block, var.secondary_cidr]
   security_group_id = aws_security_group.vpce_sg.id
 }
 
 resource "aws_vpc_endpoint" "ec2" {
   vpc_id            = aws_vpc.vpc.id
-  service_name      = "com.amazonaws.${data.aws_region.current}.ec2"
+  service_name      = "com.amazonaws.${data.aws_region.current.name}.ec2"
   vpc_endpoint_type = "Interface"
   subnet_ids        = [for az, subnet in aws_subnet.private_subnet: subnet.id]
   security_group_ids = [
@@ -152,7 +152,7 @@ resource "aws_vpc_endpoint" "ec2" {
 
 resource "aws_vpc_endpoint" "ec2Messages" {
   vpc_id            = aws_vpc.vpc.id
-  service_name      = "com.amazonaws.${data.aws_region.current}.ec2messages"
+  service_name      = "com.amazonaws.${data.aws_region.current.name}.ec2messages"
   vpc_endpoint_type = "Interface"
   subnet_ids        = [for az, subnet in aws_subnet.private_subnet: subnet.id]
   security_group_ids = [
@@ -164,7 +164,7 @@ resource "aws_vpc_endpoint" "ec2Messages" {
 
 resource "aws_vpc_endpoint" "ssm" {
   vpc_id            = aws_vpc.vpc.id
-  service_name      = "com.amazonaws.${data.aws_region.current}.ssm"
+  service_name      = "com.amazonaws.${data.aws_region.current.name}.ssm"
   vpc_endpoint_type = "Interface"
   subnet_ids        = [for az, subnet in aws_subnet.private_subnet: subnet.id]
   security_group_ids = [
@@ -176,7 +176,7 @@ resource "aws_vpc_endpoint" "ssm" {
 
 resource "aws_vpc_endpoint" "ssmmessages" {
   vpc_id            = aws_vpc.vpc.id
-  service_name      = "com.amazonaws.${data.aws_region.current}.ssmmessages"
+  service_name      = "com.amazonaws.${data.aws_region.current.name}.ssmmessages"
   vpc_endpoint_type = "Interface"
   subnet_ids        = [for az, subnet in aws_subnet.private_subnet: subnet.id]
   security_group_ids = [
@@ -188,7 +188,7 @@ resource "aws_vpc_endpoint" "ssmmessages" {
 
 resource "aws_vpc_endpoint" "ecr-api" {
   vpc_id            = aws_vpc.vpc.id
-  service_name      = "com.amazonaws.${data.aws_region.current}.ecr.api"
+  service_name      = "com.amazonaws.${data.aws_region.current.name}.ecr.api"
   vpc_endpoint_type = "Interface"
   subnet_ids        = [for az, subnet in aws_subnet.private_subnet: subnet.id]
   security_group_ids = [
@@ -200,7 +200,7 @@ resource "aws_vpc_endpoint" "ecr-api" {
 
 resource "aws_vpc_endpoint" "ecr-dkr" {
   vpc_id            = aws_vpc.vpc.id
-  service_name      = "com.amazonaws.${data.aws_region.current}.ecr.dkr"
+  service_name      = "com.amazonaws.${data.aws_region.current.name}.ecr.dkr"
   vpc_endpoint_type = "Interface"
   subnet_ids        = [for az, subnet in aws_subnet.private_subnet: subnet.id]
   security_group_ids = [
@@ -212,7 +212,7 @@ resource "aws_vpc_endpoint" "ecr-dkr" {
 
 resource "aws_vpc_endpoint" "cwlogs" {
   vpc_id            = aws_vpc.vpc.id
-  service_name      = "com.amazonaws.${data.aws_region.current}.logs"
+  service_name      = "com.amazonaws.${data.aws_region.current.name}.logs"
   vpc_endpoint_type = "Interface"
   subnet_ids        = [for az, subnet in aws_subnet.private_subnet: subnet.id]
   security_group_ids = [
@@ -224,7 +224,7 @@ resource "aws_vpc_endpoint" "cwlogs" {
 
 resource "aws_vpc_endpoint" "sts" {
   vpc_id            = aws_vpc.vpc.id
-  service_name      = "com.amazonaws.${data.aws_region.current}.sts"
+  service_name      = "com.amazonaws.${data.aws_region.current.name}.sts"
   vpc_endpoint_type = "Interface"
   subnet_ids        = [for az, subnet in aws_subnet.private_subnet: subnet.id]
   security_group_ids = [
@@ -236,7 +236,7 @@ resource "aws_vpc_endpoint" "sts" {
 
 resource "aws_vpc_endpoint" "elasticloadbalancing" {
   vpc_id            = aws_vpc.vpc.id
-  service_name      = "com.amazonaws.${data.aws_region.current}.elasticloadbalancing"
+  service_name      = "com.amazonaws.${data.aws_region.current.name}.elasticloadbalancing"
   vpc_endpoint_type = "Interface"
   subnet_ids        = [for az, subnet in aws_subnet.private_subnet: subnet.id]
   security_group_ids = [
@@ -248,7 +248,7 @@ resource "aws_vpc_endpoint" "elasticloadbalancing" {
 
 resource "aws_vpc_endpoint" "autoscaling" {
   vpc_id            = aws_vpc.vpc.id
-  service_name      = "com.amazonaws.${data.aws_region.current}.autoscaling"
+  service_name      = "com.amazonaws.${data.aws_region.current.name}.autoscaling"
   vpc_endpoint_type = "Interface"
   subnet_ids        = [for az, subnet in aws_subnet.private_subnet: subnet.id]
   security_group_ids = [
@@ -260,7 +260,7 @@ resource "aws_vpc_endpoint" "autoscaling" {
 
 resource "aws_vpc_endpoint" "s3" {
   vpc_id       = aws_vpc.vpc.id
-  service_name = "com.amazonaws.${data.aws_region.current}.s3"
+  service_name = "com.amazonaws.${data.aws_region.current.name}.s3"
 }
 
 resource "aws_vpc_endpoint_route_table_association" "route_table_assoc" {
