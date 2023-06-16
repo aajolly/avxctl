@@ -29,7 +29,7 @@ type CoPilot struct {
 
 type Azure struct {
 	SubscriptionId          string `mapstructure:"subscriptionid"`
-	ApplicationEndpoint     string `mapstructure:"applicationendpoint"`
-	ApplicationClientId     string `mapstructure:"applicationclientid"`
+	ApplicationEndpoint     string `mapstructure:"directoryid"`
+	ApplicationClientId     string `mapstructure:"applicationid"`
 	ApplicationClientSecret string `mapstructure:"applicationclientsecret"`
 }

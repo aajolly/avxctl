@@ -463,6 +463,7 @@ func CtrlInitialize(client *http.Client,
 		setCtrlName(client, ctrlurl, ctrl_name, cid1, ver)
 		aai, _ := getAWSAccountNumber(client, ctrlurl, cid1)
 		onboardAWSAccount(client, ctrlurl, aai, cid1, email, aws_role_arn, aws_role_ec2)
+		enableSGMgmt(client, ctrlurl, cid)
 		onboardAzure(client, ctrlurl, cid, sid, appcid, appsecret, appendp, email)
 		setAdminPassword(client, ctrl_private_ip, cid1, password, email, ctrlurl)
 		cid2, _ := getCid(client, password, ctrlurl)
