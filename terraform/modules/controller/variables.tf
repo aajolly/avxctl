@@ -34,14 +34,18 @@ data "http" "avx_iam_id" {
   }
 }
 data "http" "my_ip" {
-  url    = "https://api.ipify.org?format=json"
-  method = "GET"
+  url = "https://ipapi.co/ip/"
+
+  # Optional request headers
+  request_headers = {
+    Accept = "text/*"
+  }
 }
 
 locals {
   account_id      = data.aws_caller_identity.current.account_id
   tool_prefix     = "avxctl"
-  my_public_ip    = "${jsondecode(data.http.my_ip.response_body).ip}/32"
+  my_public_ip    = "${data.http.my_ip.response_body}/32"
   images_byol     = jsondecode(data.http.avx_iam_id.response_body).BYOL
   images_platinum = jsondecode(data.http.avx_iam_id.response_body).MeteredPlatinum
   ami_id          = var.type == "BYOL" || var.type == "byol" ? local.images_byol[data.aws_region.current.name] : local.images_platinum[data.aws_region.current.name]
@@ -55,7 +59,6 @@ variable "type" {
 }
 variable "region" {
   type = string
-  default = ""
 }
 variable "vpc_cidr" {
   type    = string

@@ -219,7 +219,7 @@ resource "aws_instance" "aviatrixcontroller" {
   }
 
   tags = {
-    Name      = "${local.tool_prefix}-controller"
+    Name      = "${local.tool_prefix}-ctrl-${var.ctrl_version}"
     Createdby = local.tool_prefix
   }
 

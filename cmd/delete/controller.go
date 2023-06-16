@@ -6,8 +6,10 @@ package delete
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -31,9 +33,9 @@ var controllerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		// cwd, err := os.Getwd()
 
-		filePath := viper.GetString("file")
+		// filePath := viper.GetString("file")
 
-		// Extrat the directory path
+		// Extract the directory path
 		dirPath := filepath.Dir(filePath)
 		color.Blue("Config File Directory: %s", dirPath)
 
@@ -62,12 +64,16 @@ var controllerCmd = &cobra.Command{
 		pwd := viper.GetString("demo.controller.password")
 		lic := viper.GetString("demo.controller.customerId")
 		color.Blue("## Creating Aviatrix Controller version: %s", version)
+		key := viper.GetString("demo.controller.keypair")
+		cidr := viper.GetString("demo.controller.vpcCidr")
+		viper.SetDefault("demo.controller.vpcCidr", "10.0.0.0/24") // Set default value for Controller VPC
 		dt := time.Now().Format("01-02-2006 15:04:05")
 
 		ctx := context.Background()
 		execPath, _ := common.GetExecPath()
+		cwd, _ := os.Getwd()
 
-		workingDir := "/workspaces/avx-single-region-aws/terraform/modules/controller"
+		workingDir := fmt.Sprintf("%s/terraform/modules/controller", cwd)
 
 		// Setup terraform environment and check for errors
 		tf, err := tfexec.NewTerraform(workingDir, execPath)
@@ -127,19 +133,25 @@ var controllerCmd = &cobra.Command{
 		)
 
 		// Execute terraform destroy and return the error
-		err = tf.Destroy(ctx, lockOption, parallelism)
+		trimmedVersion := common.TrimVersion(version)
+		var1 := tfexec.Var(fmt.Sprintf("vpc_cidr=%s", cidr))
+		var2 := tfexec.Var(fmt.Sprintf("region=%s", region))
+		var3 := tfexec.Var(fmt.Sprintf("ctrl_version=%s", trimmedVersion))
+		var4 := tfexec.Var(fmt.Sprintf("keypair=%s", key))
+
+		err = tf.Destroy(ctx, var1, var2, var3, var4, lockOption, parallelism)
 		if strings.Contains(err.Error(), "DependencyViolation") {
-			color.Magenta(err.Error())
+			color.Red(dt+":", err.Error())
 			err := common.DeleteSecurityGroupsByName("AviatrixSecurityGroup")
 			if err != nil {
-				color.Magenta(dt+":", err.Error())
+				color.Red(dt+":", err.Error())
 			}
 		}
 		color.Blue("## Attempting deletion again...")
 
-		err = tf.Destroy(ctx, lockOption, parallelism)
+		err = tf.Destroy(ctx, var1, var2, var3, var4, lockOption, parallelism)
 		if err != nil {
-			color.Magenta(dt+":", err.Error())
+			color.Red(dt+":", err.Error())
 		}
 	},
 }
