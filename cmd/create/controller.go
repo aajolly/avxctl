@@ -65,6 +65,10 @@ var controllerCmd = &cobra.Command{
 		pwd := viper.GetString("demo.controller.password")
 		lic := viper.GetString("demo.controller.customerId")
 		key := viper.GetString("demo.controller.keypair")
+		sid := viper.GetString("demo.azure.subscriptionid")
+		appcid := viper.GetString("demo.azure.applicationclientid")
+		appendp := viper.GetString("demo.azure.applicationendpoint")
+		appsecret := viper.GetString("demo.azure.applicationclientsecret")
 		color.Blue("## Creating Aviatrix Controller version: %s", version)
 		dt := time.Now().Format("01-02-2006 15:04:05")
 		ctx := context.Background()
@@ -165,6 +169,10 @@ var controllerCmd = &cobra.Command{
 			strings.Trim(string(ctrl_vpc_id), "\""),
 			strings.Trim(string(ctrl_subnet_cidr), "\""),
 			name,
+			sid,
+			appcid,
+			appsecret,
+			appendp,
 			"create",
 		)
 	},

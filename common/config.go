@@ -7,6 +7,7 @@ type Config struct {
 type Demo struct {
 	Controller []Controller `mapstructure:"controller"`
 	CoPilot    []CoPilot    `mapstructure:"copilot"`
+	Azure      []Azure      `mapstructure:"azure"`
 }
 
 type Controller struct {
@@ -24,4 +25,11 @@ type Controller struct {
 
 type CoPilot struct {
 	Cluster bool `mapstructure:"cluster"`
+}
+
+type Azure struct {
+	SubscriptionId          string `mapstructure:"subscriptionid"`
+	ApplicationEndpoint     string `mapstructure:"applicationendpoint"`
+	ApplicationClientId     string `mapstructure:"applicationclientid"`
+	ApplicationClientSecret string `mapstructure:"applicationclientsecret"`
 }

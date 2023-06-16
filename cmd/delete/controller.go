@@ -129,6 +129,10 @@ var controllerCmd = &cobra.Command{
 			"",
 			"",
 			name,
+			"",
+			"",
+			"",
+			"",
 			"delete",
 		)
 
