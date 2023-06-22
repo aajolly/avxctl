@@ -9,12 +9,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/aajolly/avxctl/common"
+	terraformhelper "github.com/aajolly/avxctl/terraform"
 	"github.com/fatih/color"
 	"github.com/hashicorp/terraform-exec/tfexec"
 	"github.com/spf13/cobra"
@@ -89,28 +89,35 @@ var controllerCmd = &cobra.Command{
 		// 	color.Magenta("%s is not a valid IPv4 CIDR, please specifiy a valid IPv4 CIDR, ex: 10.0.0.0/24", flags["cidr"])
 		// }
 		execPath, _ := common.GetExecPath()
-		cwd, _ := os.Getwd()
 
-		workingDir := fmt.Sprintf("%s/terraform/modules/controller", cwd)
+		tempDir, err := terraformhelper.MountEmbeddedFolderToTempDir()
+		if err != nil {
+			color.Red(dt+": ", err.Error())
+			panic(err)
+		}
+
+		color.Blue(dt+": "+"## Temporary directory mounted:", tempDir)
+
+		workingDir := fmt.Sprintf("%s/controller", tempDir)
 		trimmedVersion := common.TrimVersion(version)
 
 		// Setup terraform environment and check for errors
 		tf, err := tfexec.NewTerraform(workingDir, execPath)
 		if err != nil {
-			color.Magenta(dt+":", err.Error())
+			color.Red(dt+":", err.Error())
 			panic(err)
 		}
 		// Create Terraform workspace and check for errors
 		err = tf.WorkspaceNew(ctx, "avxctl-ctrl")
 		if strings.Contains(err.Error(), "exists") {
-			color.Magenta(err.Error())
+			color.Red(dt+":", err.Error())
 			color.Blue("## Selecting existing terraform workspace...")
 			tf.WorkspaceSelect(ctx, "avxctl-ctrl")
 		}
 		// Initialize Terraform workspace and check for errors
 		err = tf.Init(ctx, tfexec.Upgrade(true))
 		if err != nil {
-			color.Magenta(dt+":", err.Error())
+			color.Red(dt+":", err.Error())
 			panic(err)
 		}
 		// Set up options for Terraform execution
