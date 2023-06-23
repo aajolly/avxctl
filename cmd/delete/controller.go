@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -71,27 +70,26 @@ var controllerCmd = &cobra.Command{
 
 		ctx := context.Background()
 		execPath, _ := common.GetExecPath()
-		cwd, _ := os.Getwd()
 
-		workingDir := fmt.Sprintf("%s/terraform/modules/controller", cwd)
+		workingDir := "/tmp/embedded-terraform/modules/controller"
 
 		// Setup terraform environment and check for errors
 		tf, err := tfexec.NewTerraform(workingDir, execPath)
 		if err != nil {
-			color.Magenta(err.Error())
+			color.Red(dt + ": " + err.Error())
 		}
 		// Create Terraform workspace and check for errors
 		err = tf.WorkspaceNew(ctx, "avxctl-ctrl")
 		if strings.Contains(err.Error(), "exists") {
-			color.Magenta(err.Error())
-			color.Blue("## Selecting existing workspace...")
+			color.Red(dt + ": " + err.Error())
+			color.Blue(dt + ": " + "## Selecting existing workspace...")
 			tf.WorkspaceSelect(ctx, "avxctl-ctrl")
 		}
 
 		// Initialize Terraform workspace and check for errors
 		err = tf.Init(ctx, tfexec.Upgrade(true))
 		if err != nil {
-			color.Magenta(err.Error())
+			color.Red(dt + ": " + err.Error())
 		}
 		// Set up options for Terraform execution
 		lockOption := tfexec.Lock(false)
@@ -102,7 +100,7 @@ var controllerCmd = &cobra.Command{
 		// Get terraform output
 		output, err := tf.Output(ctx)
 		if err != nil {
-			color.Magenta(err.Error())
+			color.Red(dt + ": " + err.Error())
 			panic(err)
 		}
 
@@ -145,17 +143,17 @@ var controllerCmd = &cobra.Command{
 
 		err = tf.Destroy(ctx, var1, var2, var3, var4, lockOption, parallelism)
 		if strings.Contains(err.Error(), "DependencyViolation") {
-			color.Red(dt+":", err.Error())
+			color.Red(dt + ": " + err.Error())
 			err := common.DeleteSecurityGroupsByName("AviatrixSecurityGroup")
 			if err != nil {
-				color.Red(dt+":", err.Error())
+				color.Red(dt + ": " + err.Error())
 			}
 		}
 		color.Blue("## Attempting deletion again...")
 
 		err = tf.Destroy(ctx, var1, var2, var3, var4, lockOption, parallelism)
 		if err != nil {
-			color.Red(dt+":", err.Error())
+			color.Red(dt + ": " + err.Error())
 		}
 	},
 }
@@ -165,14 +163,4 @@ func init() {
 	controllerCmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the config file")
 	viper.BindPFlag("file", controllerCmd.Flags().Lookup("file"))
 	controllerCmd.MarkFlagRequired("file")
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// controllerCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// controllerCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }

@@ -7,7 +7,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"log"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -24,6 +23,9 @@ import (
 // Variable to store the file path
 var filePath string
 
+// Define DateTime for logging
+var dt = time.Now().Format("01-02-2006 15:04:05")
+
 // controllerCmd represents the controller command
 var controllerCmd = &cobra.Command{
 	Use:   "controller",
@@ -34,7 +36,7 @@ var controllerCmd = &cobra.Command{
 
 		// Extract the directory path
 		dirPath := filepath.Dir(filePath)
-		color.Blue("Config File Directory: %s", dirPath)
+		color.Blue(dt+": "+"Config File Directory: %s", dirPath)
 
 		// Extract the file name
 		fileName := filepath.Base(filePath)
@@ -44,14 +46,13 @@ var controllerCmd = &cobra.Command{
 		viper.SetConfigType("yaml")
 		err := viper.ReadInConfig()
 		if err != nil {
-			log.Fatalf("fatal error config file: %v", err)
+			color.Red(dt+": "+"fatal error config file: %v", err)
 		}
 		config := common.Config{}
 		err = viper.Unmarshal(&config)
 		if err != nil {
-			log.Fatalf("unable to decode into struct: %v", err)
+			color.Red(dt+": "+"unable to decode into struct: %v", err)
 		}
-		color.Green(viper.GetString("demo.controller.region"))
 
 		// Parse attributes from config file
 		name := viper.GetString("demo.controller.name")
@@ -70,24 +71,8 @@ var controllerCmd = &cobra.Command{
 		appendp := viper.GetString("demo.azure.directoryid")
 		appsecret := viper.GetString("demo.azure.applicationclientsecret")
 		color.Blue("## Creating Aviatrix Controller version: %s", version)
-		dt := time.Now().Format("01-02-2006 15:04:05")
 		ctx := context.Background()
 
-		// flags := map[string]string{
-		// 	"name":    name,
-		// 	"region":  region,
-		// 	"version": version,
-		// 	"cidr":    cidr,
-		// 	"email":   email,
-		// 	"pwd":     pwd,
-		// 	"lic":     lic,
-		// 	"key":     key,
-		// }
-
-		// common.IsFlagEmpty(flags)
-		// if !common.IsIPv4CIDR(flags["cidr"]) {
-		// 	color.Magenta("%s is not a valid IPv4 CIDR, please specifiy a valid IPv4 CIDR, ex: 10.0.0.0/24", flags["cidr"])
-		// }
 		execPath, _ := common.GetExecPath()
 
 		tempDir, err := terraformhelper.MountEmbeddedFolderToTempDir()
@@ -117,7 +102,7 @@ var controllerCmd = &cobra.Command{
 		// Initialize Terraform workspace and check for errors
 		err = tf.Init(ctx, tfexec.Upgrade(true))
 		if err != nil {
-			color.Red(dt+":", err.Error())
+			color.Red(dt + ": " + err.Error())
 			panic(err)
 		}
 		// Set up options for Terraform execution
@@ -133,13 +118,13 @@ var controllerCmd = &cobra.Command{
 		// Apply terraform code and return the error
 		err = tf.Apply(ctx, var1, var2, var3, var4, lockOption, parallelism)
 		if err != nil {
-			color.Magenta(err.Error())
+			color.Red(dt + ": " + err.Error())
 			panic(err)
 		}
 		// Get terraform output
 		output, err := tf.Output(ctx)
 		if err != nil {
-			color.Magenta(err.Error())
+			color.Red(dt + ": " + err.Error())
 			panic(err)
 		}
 
@@ -188,6 +173,9 @@ var controllerCmd = &cobra.Command{
 func init() {
 	CreateCmd.AddCommand(controllerCmd)
 
+	controllerCmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the config file")
+	viper.BindPFlag("file", controllerCmd.Flags().Lookup("file"))
+	controllerCmd.MarkFlagRequired("file")
 	// Define local flags for the controller sub-command
 	// controllerCmd.Flags().StringP("name", "n", "avxctl-controller", "Name of the Aviatrix Controller")
 	// controllerCmd.Flags().StringP("ver", "v", "latest", "Aviatrix controller version to deploy")
@@ -199,12 +187,9 @@ func init() {
 	// controllerCmd.Flags().StringP("keypair", "k", "", "KeyPair to use for deploying Aviatrix Controller")
 	// controllerCmd.Flags().String("aws-account-id", "", "AWS Account ID for Aviatrix Controller Deployment")
 	// controllerCmd.Flags().String("azure-subs-id", "", "Azure Subscription ID for Aviatrix Controller Deployment")
-	controllerCmd.Flags().StringVarP(&filePath, "file", "f", "", "Path to the config file")
-	viper.BindPFlag("file", controllerCmd.Flags().Lookup("file"))
 	// controllerCmd.MarkFlagRequired("email")
 	// controllerCmd.MarkFlagRequired("password")
 	// controllerCmd.MarkFlagRequired("customer-id")
 	// controllerCmd.MarkFlagRequired("region")
 	// controllerCmd.MarkFlagRequired("keypair")
-	controllerCmd.MarkFlagRequired("file")
 }
