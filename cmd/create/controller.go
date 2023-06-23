@@ -83,7 +83,7 @@ var controllerCmd = &cobra.Command{
 
 		color.Blue(dt+": "+"## Temporary directory mounted:", tempDir)
 
-		workingDir := fmt.Sprintf("%s/controller", tempDir)
+		workingDir := fmt.Sprintf("%s/modules/controller", tempDir)
 		trimmedVersion := common.TrimVersion(version)
 
 		// Setup terraform environment and check for errors
